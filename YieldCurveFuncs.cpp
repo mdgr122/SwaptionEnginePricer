@@ -18,27 +18,25 @@ Handle<YieldTermStructure> buildYieldCurve_ois(
     // Create rate helpers from tenors and rates
     std::vector<ext::shared_ptr<RateHelper>> rateHelpers;
     for (size_t i = 0; i < tenors.size(); ++i) {
+        auto quote = ext::make_shared<SimpleQuote>(rates[i]);
         rateHelpers.push_back(ext::make_shared<OISRateHelper>(
-            2,                             // Settlement days (ensure this is a Natural, e.g., 2u)
-            tenors[i],                     // Swap maturity (Period)
-            Handle<Quote>(ext::make_shared<SimpleQuote>(rates[i])), // Fixed OIS rate (Handle<Quote>)
-            floatingLegIndex               // Overnight index (ext::shared_ptr<OvernightIndex>)
+            2,                             // Settlement days
+            tenors[i],                     // Swap maturity
+            Handle<Quote>(quote),          // Fixed OIS rate
+            floatingLegIndex               // Overnight index
         ));
     }
 
     // Construct the yield curve
-    ext::shared_ptr<YieldTermStructure> yieldCurve(
-        new PiecewiseYieldCurve<ZeroYield, Linear>(
-            date,                          // Settlement date
-            rateHelpers,                   // Rate helpers
-            fixedDayCountConvention        // Day count convention
-        )
+    auto yieldCurve = ext::make_shared<PiecewiseYieldCurve<ZeroYield, Linear>>(
+        date,                          // Settlement date
+        rateHelpers,                   // Rate helpers
+        fixedDayCountConvention        // Day count convention
     );
 
     return Handle<YieldTermStructure>(yieldCurve);
 }
 
-// Function to build the yield curve
 Handle<YieldTermStructure> buildYieldCurve_ibor(
     const Date& date,
     const Calendar& calendar,
@@ -56,32 +54,28 @@ Handle<YieldTermStructure> buildYieldCurve_ibor(
     // Create rate helpers from tenors and rates
     std::vector<ext::shared_ptr<RateHelper>> rateHelpers;
     for (size_t i = 0; i < tenors.size(); ++i) {
-        rateHelpers.push_back(ext::make_shared<SwapRateHelper>
-            (
-                Handle<Quote>(ext::make_shared<SimpleQuote>(rates[i])),
-                tenors[i],        // Swap maturity
-                calendar,         // Calendar
-                fixedLegFrequency,           // Fixed leg frequency
-                fixedBusinessDayConvention,// Fixed leg convention
-                fixedDayCountConvention,      // Fixed leg day count
-                floatingLegIndex // Floating leg index
-            )
-        );
+        auto quote = ext::make_shared<SimpleQuote>(rates[i]);
+        rateHelpers.push_back(ext::make_shared<SwapRateHelper>(
+            Handle<Quote>(quote),
+            tenors[i],                            // Swap maturity
+            calendar,                             // Calendar
+            fixedLegFrequency,                    // Fixed leg frequency
+            fixedBusinessDayConvention,           // Fixed leg convention
+            fixedDayCountConvention,              // Fixed leg day count
+            floatingLegIndex                      // Floating leg index
+        ));
     }
 
     // Construct the yield curve
-    ext::shared_ptr<YieldTermStructure> yieldCurve(
-        new PiecewiseYieldCurve<ZeroYield, Linear>(
-            date,            // Settlement date
-            rateHelpers,      // Rate helpers
-            fixedDayCountConvention        // Day count convention
-        )
+    auto yieldCurve = ext::make_shared<PiecewiseYieldCurve<ZeroYield, Linear>>(
+        date,                          // Settlement date
+        rateHelpers,                   // Rate helpers
+        fixedDayCountConvention        // Day count convention
     );
 
     return Handle<YieldTermStructure>(yieldCurve);
 }
 
-// Function to map unit character to QuantLib::TimeUnit
 TimeUnit mapCharToTimeUnit(char unit) {
     switch (std::toupper(unit)) {
     case 'Y': return Years;
@@ -93,8 +87,7 @@ TimeUnit mapCharToTimeUnit(char unit) {
     }
 }
 
-
-std::vector<Period> defineTenors(std::vector<std::string> vec)
+std::vector<Period> defineTenors(const std::vector<std::string>& vec)
 {
     std::vector<Period> result;
 
@@ -123,27 +116,18 @@ std::vector<Period> defineTenors(std::vector<std::string> vec)
 
         TimeUnit timeUnit = mapCharToTimeUnit(unit);
         result.emplace_back(number, timeUnit);
-
     }
-
 
     return result;
 }
 
-std::vector<QuantLib::Rate> defineRates(std::vector<float> vec)
+std::vector<Rate> defineRates(const std::vector<float>& vec)
 {
-    std::vector<QuantLib::Rate> result;
-
-    for (const auto& elem : vec)
-    {
-        result.push_back(elem);
-    }
-
+    std::vector<Rate> result(vec.begin(), vec.end());
     return result;
 }
 
-
-std::string formatQuantLibDate(const QuantLib::Date& date) {
+std::string formatQuantLibDate(const Date& date) {
     // Extract year, month, and day from the QuantLib::Date object
     int year = date.year();
     int month = date.month();

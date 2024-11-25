@@ -12,7 +12,7 @@ endif()
 project("SwaptionEnginePricer")
 
 # Add source to this project's executable.
-add_executable(SwaptionEnginePricer "SwaptionEnginePricer.cpp" "SwaptionEnginePricer.h" "YieldCurveFuncs.h" "YieldCurveFuncs.cpp")
+add_executable(SwaptionEnginePricer "SwaptionEnginePricer.cpp" "SwaptionEnginePricer.h" "YieldCurveFuncs.h" "YieldCurveFuncs.cpp" "SwaptionPricer.h" "SwaptionPricer.cpp")
 
 # Set C++ standard
 if (CMAKE_VERSION VERSION_GREATER 3.12)
